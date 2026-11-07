@@ -460,3 +460,4 @@ class _HackerWidgetViewState extends State<HackerWidgetView> {
     );
   }
 }
+

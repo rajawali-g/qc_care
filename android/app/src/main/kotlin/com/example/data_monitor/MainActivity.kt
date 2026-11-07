@@ -236,11 +236,14 @@ class MainActivity : FlutterActivity() {
         return resultList
     }
 
+    private var lastTotalRxPackets: Long = 0L
+
     private fun getRealtimeSpeed(): Map<String, Any> {
         val now = System.currentTimeMillis()
         val totalRx = TrafficStats.getTotalRxBytes()
         val totalTx = TrafficStats.getTotalTxBytes()
         val mobileRx = TrafficStats.getMobileRxBytes()
+        val totalPackets = TrafficStats.getTotalRxPackets()
 
         var rxSpeedKb = 0.0
         var txSpeedKb = 0.0
@@ -259,12 +262,21 @@ class MainActivity : FlutterActivity() {
         lastTotalRxBytes = totalRx
         lastTotalTxBytes = totalTx
         lastMobileRxBytes = mobileRx
+        lastTotalRxPackets = totalPackets
+
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val activeNet = cm.activeNetworkInfo
+        val isWifi = activeNet?.type == ConnectivityManager.TYPE_WIFI
+        val netFreq = if (isWifi) "2.4/5.0GHz (WLAN)" else "5G_SA / LTE (rmnet0)"
 
         return mapOf(
             "rxSpeedKb" to rxSpeedKb.coerceAtLeast(0.0),
             "txSpeedKb" to txSpeedKb.coerceAtLeast(0.0),
             "mobileSpeedKb" to mobileSpeedKb.coerceAtLeast(0.0),
-            "totalRxBytes" to totalRx
+            "wifiSpeedKb" to (rxSpeedKb - mobileSpeedKb).coerceAtLeast(0.0),
+            "totalRxBytes" to totalRx,
+            "totalRxPackets" to totalPackets,
+            "networkFreq" to netFreq
         )
     }
 }

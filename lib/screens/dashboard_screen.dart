@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../models/network_usage_model.dart';
@@ -30,6 +31,16 @@ class _DashboardScreenState extends State<DashboardScreen>
   FilterMode _filterMode = FilterMode.all;
   int _activeViewTab = 1; // 0: [01] TERMINAL_NETSTAT, 1: [02] WIDGET_LAYAR_DEPAN (Default: Match Image 2!)
 
+  // Real-time telemetry dynamic metrics (Updated every second)
+  Timer? _realtimeTimer;
+  double _realtimeRxSpeedKb = 340.2;
+  double _realtimeMobileSpeedKb = 120.0;
+  double _realtimeWifiSpeedKb = 220.2;
+  int _realtimeRxPackets = 251142;
+  double _realtimePingMs = 22.4;
+  double _realtimeJitterMs = 1.9;
+  String _networkFreq = '2.4/5.0GHz (WLAN)';
+
   late AnimationController _waveController;
   late AnimationController _pulseController;
 
@@ -49,11 +60,30 @@ class _DashboardScreenState extends State<DashboardScreen>
     )..repeat(reverse: true);
 
     _refreshAll();
+    _startRealtimeTicker();
+  }
+
+  void _startRealtimeTicker() {
+    _realtimeTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+      final telemetry = await NetworkService.fetchRealtimeTelemetry();
+      if (mounted) {
+        setState(() {
+          _realtimeRxSpeedKb = telemetry.rxSpeedKb;
+          _realtimeMobileSpeedKb = telemetry.mobileSpeedKb;
+          _realtimeWifiSpeedKb = telemetry.wifiSpeedKb;
+          _realtimeRxPackets = telemetry.totalRxPackets;
+          _realtimePingMs = telemetry.pingMs;
+          _realtimeJitterMs = telemetry.jitterMs;
+          _networkFreq = telemetry.networkFreq;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _realtimeTimer?.cancel();
     _waveController.dispose();
     _pulseController.dispose();
     super.dispose();
@@ -584,8 +614,8 @@ class _DashboardScreenState extends State<DashboardScreen>
                 return CustomPaint(
                   painter: _CyberWaveformPainter(
                     animationValue: _waveController.value,
-                    cellLoadRatio: (_usageData.todayMobileMb / 1000).clamp(0.2, 1.0),
-                    wifiLoadRatio: (_usageData.todayWifiMb / 2000).clamp(0.2, 1.0),
+                    cellLoadRatio: (_realtimeMobileSpeedKb / 1000.0).clamp(0.18, 1.0),
+                    wifiLoadRatio: (_realtimeWifiSpeedKb / 2000.0).clamp(0.18, 1.0),
                   ),
                 );
               },
@@ -593,22 +623,41 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
 
           const SizedBox(height: 6),
-          const Row(
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'LIVE THROUGHPUT: ⚡ 340.2 KB/s (CELL) | ⚡ 1.25 MB/s (WIFI)',
-                style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9, fontWeight: FontWeight.bold),
+                'FREQ: $_networkFreq // RX_PACKETS: ${_formatPackets(_realtimeRxPackets)}',
+                style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9, fontWeight: FontWeight.bold),
               ),
               Text(
-                'FREQ: 5.0GHz',
-                style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 9),
+                'SPEED: ${_formatSpeed(_realtimeRxSpeedKb)} // JITTER: ${_realtimeJitterMs.toStringAsFixed(1)}ms [${_realtimePingMs.toStringAsFixed(0)}ms]',
+                style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9, fontWeight: FontWeight.bold),
               ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  String _formatSpeed(double kbps) {
+    if (kbps >= 1024) {
+      final mbps = (kbps * 8) / 1024;
+      return '${(kbps / 1024).toStringAsFixed(2)}MB/s (${mbps.toStringAsFixed(1)}Mbps)';
+    } else {
+      final kbit = (kbps * 8).round();
+      return '${kbps.toStringAsFixed(1)}KB/s (${kbit}Kbps)';
+    }
+  }
+
+  String _formatPackets(int pkts) {
+    if (pkts >= 1000000) {
+      return '${(pkts / 1000000).toStringAsFixed(2)}M pkts';
+    } else if (pkts >= 1000) {
+      return '${(pkts / 1000).toStringAsFixed(1)}k pkts';
+    }
+    return '$pkts pkts';
   }
 
   Widget _buildHackerQuotaHud(
