@@ -5,6 +5,7 @@ import '../models/app_usage_model.dart';
 import '../services/network_service.dart';
 import '../services/quota_preferences.dart';
 import 'widget_guide_dialog.dart';
+import 'hacker_widget_view.dart';
 
 enum FilterMode { all, cellOnly, wifiOnly }
 
@@ -27,6 +28,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   NetworkUsageData _usageData = NetworkUsageData.empty();
   List<AppUsageInfo> _appList = [];
   FilterMode _filterMode = FilterMode.all;
+  int _activeViewTab = 1; // 0: [01] TERMINAL_NETSTAT, 1: [02] WIDGET_LAYAR_DEPAN (Default: Match Image 2!)
 
   late AnimationController _waveController;
   late AnimationController _pulseController;
@@ -141,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     final daysRemaining = QuotaPreferences.getDaysUntilNextReset(_resetDay);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF020402), // Pitch Hacker Black
+      backgroundColor: Colors.black,
       appBar: _buildHackerConsoleAppBar(),
       body: _isLoading
           ? const Center(
@@ -164,42 +166,71 @@ class _DashboardScreenState extends State<DashboardScreen>
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Hacker Terminal Banner
-                    _buildHackerBanner(),
+                child: Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Cyber Payload Monitor Header Banner (Matching HTML Preview)
+                        _buildCyberPayloadBanner(),
 
-                    if (!_hasPermission) ...[
-                      const SizedBox(height: 10),
-                      _buildHackerPermissionAlert(),
-                    ],
+                        const SizedBox(height: 10),
 
-                    const SizedBox(height: 10),
+                        // Tab Switcher ([01] TERMINAL_NETSTAT vs [02] WIDGET_LAYAR_DEPAN)
+                        _buildCyberTabSwitcher(),
 
-                    // ANIMATED OSCILLOSCOPE / QUOTA WAVEFORM GRAPH
-                    _buildAnimatedTelemetryGraph(remainingGb, percentRemaining),
+                        const SizedBox(height: 12),
 
-                    const SizedBox(height: 12),
+                        // Content Switcher
+                        if (_activeViewTab == 1)
+                          HackerWidgetView(
+                            totalQuotaGb: _totalQuotaGb,
+                            usageData: _usageData,
+                            apps: _appList,
+                            onOpenNetstat: () {
+                              setState(() {
+                                _activeViewTab = 0;
+                              });
+                            },
+                          )
+                        else ...[
+                          // Hacker Terminal Banner
+                          _buildHackerBanner(),
 
-                    // Quota Metrics HUD Box
-                    _buildHackerQuotaHud(remainingGb, percentRemaining, usedGb, daysRemaining),
+                          if (!_hasPermission) ...[
+                            const SizedBox(height: 10),
+                            _buildHackerPermissionAlert(),
+                          ],
 
-                    const SizedBox(height: 12),
+                          const SizedBox(height: 10),
 
-                    // Filter Mode Switcher
-                    _buildHackerFilterBar(),
+                          // ANIMATED OSCILLOSCOPE / QUOTA WAVEFORM GRAPH
+                          _buildAnimatedTelemetryGraph(remainingGb, percentRemaining),
 
-                    const SizedBox(height: 12),
+                          const SizedBox(height: 12),
 
-                    // Per-App Live Sniffer Table (Operator vs WiFi)
-                    _buildHackerProcessTable(),
+                          // Quota Metrics HUD Box
+                          _buildHackerQuotaHud(remainingGb, percentRemaining, usedGb, daysRemaining),
 
-                    const SizedBox(height: 14),
+                          const SizedBox(height: 12),
 
-                    // Hacker Prompt Footer
-                    _buildTerminalPromptFooter(),
-                  ],
+                          // Filter Mode Switcher
+                          _buildHackerFilterBar(),
+
+                          const SizedBox(height: 12),
+
+                          // Per-App Live Sniffer Table (Operator vs WiFi)
+                          _buildHackerProcessTable(),
+
+                          const SizedBox(height: 14),
+
+                          // Hacker Prompt Footer
+                          _buildTerminalPromptFooter(),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -208,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen>
 
   PreferredSizeWidget _buildHackerConsoleAppBar() {
     return AppBar(
-      backgroundColor: const Color(0xFF050805),
+      backgroundColor: Colors.black,
       elevation: 0,
       titleSpacing: 10,
       title: Row(
@@ -252,14 +283,200 @@ class _DashboardScreenState extends State<DashboardScreen>
           },
         ),
         IconButton(
-          icon: const Icon(Icons.tune, color: Color(0xFF008F11), size: 18),
+          icon: const Icon(Icons.tune, color: Color(0xFF00FF41), size: 18),
           tooltip: 'Configuration',
           onPressed: widget.onOpenSettings,
         ),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1),
-        child: Container(height: 1, color: const Color(0xFF003B00)),
+        child: Container(height: 1, color: const Color(0xFF003300)),
+      ),
+    );
+  }
+
+  Widget _buildCyberPayloadBanner() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF020602),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFF00FF41).withOpacity(0.5)),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00FF41).withOpacity(0.08), blurRadius: 10),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF00FF41), width: 1.5),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF00FF41).withOpacity(0.35), blurRadius: 6),
+              ],
+            ),
+            child: const Text(
+              '>_',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                color: Color(0xFF00FF41),
+                fontWeight: FontWeight.w900,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'root@QC-MCE:~#',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    color: Color(0xFF00FF41),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '[CYBER_PAYLOAD_MONITOR]',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    color: Color(0xFF00FF41),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                SizedBox(height: 2),
+                Text(
+                  'INTERFACES: rmnet0 (CELLULAR) | wlan0 (WIFI) • PROTOCOL: PACKET_SNIFFER',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    color: Color(0xFF008F11),
+                    fontSize: 9,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00FF41),
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(color: const Color(0xFF00FF41).withOpacity(0.4), blurRadius: 6),
+              ],
+            ),
+            child: const Text(
+              'BREACH_INSPECTION_ACTIVE',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                color: Colors.black,
+                fontSize: 7.5,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCyberTabSwitcher() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF020502),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF004400)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _activeViewTab = 0),
+              borderRadius: BorderRadius.circular(8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _activeViewTab == 0 ? const Color(0xFF00FF41) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _activeViewTab == 0 ? const Color(0xFF00FF41) : const Color(0xFF005500),
+                  ),
+                  boxShadow: _activeViewTab == 0
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF00FF41).withOpacity(0.45),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  '[01] TERMINAL_NETSTAT',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    color: _activeViewTab == 0 ? Colors.black : const Color(0xFF00FF41),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: InkWell(
+              onTap: () => setState(() => _activeViewTab = 1),
+              borderRadius: BorderRadius.circular(8),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(vertical: 11),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _activeViewTab == 1 ? const Color(0xFF00FF41) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: _activeViewTab == 1 ? const Color(0xFF00FF41) : const Color(0xFF005500),
+                  ),
+                  boxShadow: _activeViewTab == 1
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF00FF41).withOpacity(0.45),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  '[02] WIDGET_LAYAR_DEPAN',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    color: _activeViewTab == 1 ? Colors.black : const Color(0xFF00FF41),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

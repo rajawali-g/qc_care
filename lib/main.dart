@@ -9,7 +9,7 @@ void main() {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF090D15),
+      systemNavigationBarColor: Colors.black,
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
@@ -26,11 +26,11 @@ class QcMceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF07090E),
+        scaffoldBackgroundColor: Colors.black,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF00E5FF),
+          seedColor: const Color(0xFF00FF41),
           brightness: Brightness.dark,
-          surface: const Color(0xFF0C101A),
+          surface: const Color(0xFF020502),
         ),
         useMaterial3: true,
       ),
@@ -65,32 +65,33 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
 
     return Scaffold(
+      backgroundColor: Colors.black,
       body: IndexedStack(
         index: _currentIndex,
         children: screens,
       ),
       bottomNavigationBar: Container(
         decoration: const BoxDecoration(
-          color: Color(0xFF090D15),
-          border: Border(top: BorderSide(color: Color(0xFF1B2333))),
+          color: Color(0xFF020402),
+          border: Border(top: BorderSide(color: Color(0xFF003300), width: 1.5)),
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
           backgroundColor: Colors.transparent,
-          indicatorColor: const Color(0xFF00E5FF).withOpacity(0.18),
+          indicatorColor: const Color(0xFF00FF41).withOpacity(0.18),
           surfaceTintColor: Colors.transparent,
           onDestinationSelected: (index) {
             setState(() => _currentIndex = index);
           },
           destinations: const [
             NavigationDestination(
-              icon: Icon(Icons.radar_rounded, color: Color(0xFF78909C)),
-              selectedIcon: Icon(Icons.radar_rounded, color: Color(0xFF00E5FF)),
+              icon: Icon(Icons.radar_rounded, color: Color(0xFF005500)),
+              selectedIcon: Icon(Icons.radar_rounded, color: Color(0xFF00FF41)),
               label: 'TELEMETRY',
             ),
             NavigationDestination(
-              icon: Icon(Icons.tune_rounded, color: Color(0xFF78909C)),
-              selectedIcon: Icon(Icons.tune_rounded, color: Color(0xFF00E5FF)),
+              icon: Icon(Icons.tune_rounded, color: Color(0xFF005500)),
+              selectedIcon: Icon(Icons.tune_rounded, color: Color(0xFF00FF41)),
               label: 'SYS_CONFIG',
             ),
           ],

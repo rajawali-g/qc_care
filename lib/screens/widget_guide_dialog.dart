@@ -6,18 +6,22 @@ class WidgetGuideDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: const Color(0xFF1E222D),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFF00FF41), width: 1.5),
+      ),
+      backgroundColor: const Color(0xFF020602),
       title: const Row(
         children: [
-          Icon(Icons.widgets_rounded, color: Color(0xFF64B5F6), size: 26),
+          Icon(Icons.widgets_rounded, color: Color(0xFF00FF41), size: 24),
           SizedBox(width: 10),
           Text(
-            'Pasang di Layar Depan',
+            'DEPLOY // HOMESCREEN_WIDGET',
             style: TextStyle(
-              fontSize: 18,
+              fontFamily: 'monospace',
+              fontSize: 14,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Color(0xFF00FF41),
             ),
           ),
         ],
@@ -28,14 +32,14 @@ class WidgetGuideDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text(
-              'Agar kuota data terpantau langsung di layar depan HP Anda tanpa buka aplikasi:',
-              style: TextStyle(fontSize: 13, color: Color(0xFFB0BEC5), height: 1.4),
+              '>> INSTRUKSI PASANG WIDGET KUOTA KE LAYAR DEPAN HP:',
+              style: TextStyle(fontFamily: 'monospace', fontSize: 11, color: Color(0xFF008F11), height: 1.4),
             ),
             const SizedBox(height: 16),
             _buildStepItem(
               number: '1',
               title: 'Ke Layar Utama (Home Screen)',
-              desc: 'Tutup aplikasi lalu pergi ke layar utama HP Anda.',
+              desc: 'Tutup aplikasi lalu pergi ke layar utama ponsel Anda.',
             ),
             _buildStepItem(
               number: '2',
@@ -55,24 +59,24 @@ class WidgetGuideDialog extends StatelessWidget {
             _buildStepItem(
               number: '5',
               title: 'Tarik ke Layar Depan',
-              desc: 'Tahan widget "QC_MCE Widget Kuota" lalu seret ke posisi yang Anda inginkan di layar depan HP Anda.',
+              desc: 'Tahan widget "QC_MCE" lalu seret ke posisi yang Anda inginkan di layar depan HP Anda.',
             ),
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF263238),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFF37474F)),
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF004400)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline, color: Color(0xFF81D4FA), size: 20),
+                  Icon(Icons.info_outline, color: Color(0xFF00FF41), size: 18),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Widget akan selalu terupdate otomatis & sisa kuota langsung tampil di layar depan.',
-                      style: TextStyle(fontSize: 11, color: Color(0xFFCFD8DC)),
+                      'STATUS: Widget tersinkronisasi otomatis dengan kuota operator & wifi harian.',
+                      style: TextStyle(fontFamily: 'monospace', fontSize: 10, color: Color(0xFF00FF41)),
                     ),
                   ),
                 ],
@@ -85,10 +89,11 @@ class WidgetGuideDialog extends StatelessWidget {
         FilledButton(
           onPressed: () => Navigator.pop(context),
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF1E88E5),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            backgroundColor: const Color(0xFF00FF41),
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           ),
-          child: const Text('Mengerti', style: TextStyle(color: Colors.white)),
+          child: const Text('DISMISS // ACK', style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold)),
         ),
       ],
     );
@@ -101,19 +106,21 @@ class WidgetGuideDialog extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 24,
-            height: 24,
+            width: 22,
+            height: 22,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1976D2),
+            decoration: BoxDecoration(
+              color: Colors.black,
               shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFF00FF41)),
             ),
             child: Text(
               number,
               style: const TextStyle(
-                color: Colors.white,
+                fontFamily: 'monospace',
+                color: Color(0xFF00FF41),
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
+                fontSize: 11,
               ),
             ),
           ),
@@ -125,17 +132,19 @@ class WidgetGuideDialog extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
+                    fontFamily: 'monospace',
+                    color: Color(0xFF00FF41),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   desc,
                   style: const TextStyle(
-                    color: Color(0xFF90A4AE),
-                    fontSize: 12,
+                    fontFamily: 'monospace',
+                    color: Color(0xFF008F11),
+                    fontSize: 11,
                     height: 1.3,
                   ),
                 ),

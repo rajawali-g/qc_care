@@ -79,30 +79,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(
-        backgroundColor: Color(0xFF07090E),
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF00E5FF))),
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF00FF41))),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF07090E),
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF090D15),
+        backgroundColor: const Color(0xFF020502),
         title: const Text(
           'SYS_CONFIG // QUOTA_PARAMETERS',
-          style: TextStyle(fontFamily: 'monospace', color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+          style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 13, fontWeight: FontWeight.bold),
         ),
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.save_rounded, color: Color(0xFF00E5FF), size: 20),
+            icon: const Icon(Icons.save_rounded, color: Color(0xFF00FF41), size: 20),
             tooltip: 'Commit Changes',
             onPressed: _saveSettings,
           ),
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFF1B2333)),
+          child: Container(height: 1, color: const Color(0xFF003300)),
         ),
       ),
       body: SingleChildScrollView(
@@ -119,7 +119,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   const Text(
                     'Tentukan batas kuota total data (GB):',
-                    style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11),
+                    style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 11),
                   ),
                   const SizedBox(height: 10),
                   Row(
@@ -128,40 +128,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: TextField(
                           controller: _quotaController,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          style: const TextStyle(fontFamily: 'monospace', color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 20, fontWeight: FontWeight.bold),
                           decoration: InputDecoration(
                             filled: true,
-                            fillColor: const Color(0xFF0F1523),
+                            fillColor: Colors.black,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFF1D283E)),
+                              borderSide: const BorderSide(color: Color(0xFF004400)),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFF1D283E)),
+                              borderSide: const BorderSide(color: Color(0xFF004400)),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(color: Color(0xFF00E5FF)),
+                              borderSide: const BorderSide(color: Color(0xFF00FF41), width: 1.5),
                             ),
                             suffixText: 'GIGABYTES (GB)',
-                            suffixStyle: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00E5FF), fontSize: 11),
+                            suffixStyle: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 11),
                           ),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const Text('PRESETS:', style: TextStyle(fontFamily: 'monospace', color: Color(0xFF78909C), fontSize: 10)),
+                  const Text('PRESETS:', style: TextStyle(fontFamily: 'monospace', color: Color(0xFF006600), fontSize: 10)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
                     children: _presetQuotas.map((q) {
                       return ActionChip(
                         label: Text('${q.toInt()} GB', style: const TextStyle(fontFamily: 'monospace', fontSize: 11)),
-                        backgroundColor: const Color(0xFF0E1422),
-                        side: const BorderSide(color: Color(0xFF1C273D)),
-                        labelStyle: const TextStyle(color: Color(0xFF80D8FF)),
+                        backgroundColor: Colors.black,
+                        side: const BorderSide(color: Color(0xFF004400)),
+                        labelStyle: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41)),
                         onPressed: () {
                           setState(() {
                             _quotaController.text = q.toStringAsFixed(1);
@@ -185,22 +185,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   const Text(
                     'Pilih hari pergantian siklus reset bulanan:',
-                    style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11),
+                    style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 11),
                   ),
                   const SizedBox(height: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0F1523),
+                      color: Colors.black,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF1D283E)),
+                      border: Border.all(color: const Color(0xFF004400)),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<int>(
                         value: _resetDay,
                         isExpanded: true,
-                        dropdownColor: const Color(0xFF0F1523),
-                        style: const TextStyle(fontFamily: 'monospace', color: Colors.white, fontSize: 13),
+                        dropdownColor: const Color(0xFF020602),
+                        style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 12),
                         items: List.generate(28, (index) => index + 1).map((day) {
                           return DropdownMenuItem<int>(
                             value: day,
@@ -233,11 +233,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       const Text(
                         'Ambang batas peringatan kuota:',
-                        style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11),
+                        style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 11),
                       ),
                       Text(
                         '$_warningPercent% REMAINING',
-                        style: const TextStyle(fontFamily: 'monospace', color: Color(0xFFFFB300), fontWeight: FontWeight.bold, fontSize: 11),
+                        style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontWeight: FontWeight.bold, fontSize: 11),
                       ),
                     ],
                   ),
@@ -246,8 +246,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     min: 5,
                     max: 40,
                     divisions: 7,
-                    activeColor: const Color(0xFFFFB300),
-                    inactiveColor: const Color(0xFF1D283E),
+                    activeColor: const Color(0xFF00FF41),
+                    inactiveColor: const Color(0xFF003300),
                     onChanged: (val) {
                       setState(() => _warningPercent = val.round());
                     },
@@ -267,7 +267,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   const Text(
                     'Aktifkan modul widget Android di layar utama ponsel:',
-                    style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11),
+                    style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 11),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
@@ -276,8 +276,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: const Icon(Icons.info_outline_rounded, size: 16),
                       label: const Text('BACA PANDUAN DEPLOY WIDGET', style: TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.bold)),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF00E5FF),
-                        side: const BorderSide(color: Color(0xFF00E5FF)),
+                        foregroundColor: const Color(0xFF00FF41),
+                        side: const BorderSide(color: Color(0xFF00FF41)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
@@ -303,7 +303,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: const Icon(Icons.bolt_rounded, size: 18),
                 label: const Text('APPLY_PARAMETERS // COMMIT', style: TextStyle(fontFamily: 'monospace', fontSize: 13, fontWeight: FontWeight.w900)),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF00E5FF),
+                  backgroundColor: const Color(0xFF00FF41),
                   foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
@@ -325,22 +325,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFF0B0F19),
+        color: const Color(0xFF020502),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF182236)),
+        border: Border.all(color: const Color(0xFF004400)),
+        boxShadow: [
+          BoxShadow(color: const Color(0xFF00FF41).withOpacity(0.08), blurRadius: 10),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF00E5FF), size: 16),
+              Icon(icon, color: const Color(0xFF00FF41), size: 16),
               const SizedBox(width: 8),
               Text(
                 tag,
                 style: const TextStyle(
                   fontFamily: 'monospace',
-                  color: Color(0xFF80D8FF),
+                  color: Color(0xFF00FF41),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.5,
