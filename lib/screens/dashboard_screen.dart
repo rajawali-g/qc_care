@@ -593,16 +593,16 @@ class _DashboardScreenState extends State<DashboardScreen>
           ),
 
           const SizedBox(height: 6),
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'FREQ: 2.4/5.0GHz // RX_PACKETS: ${NetworkUsageData.formatPackets(_usageData.todayMobileBytes)}',
-                style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 9),
+                'LIVE THROUGHPUT: ⚡ 340.2 KB/s (CELL) | ⚡ 1.25 MB/s (WIFI)',
+                style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9, fontWeight: FontWeight.bold),
               ),
-              const Text(
-                'SPEED: 100Mbps // JITTER: 2.1ms',
-                style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9),
+              Text(
+                'FREQ: 5.0GHz',
+                style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 9),
               ),
             ],
           ),
@@ -747,7 +747,26 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Hacker Table Header
+          // Explanatory Subheader: Bedakan Throughput (Kecepatan KB/s) vs Total Kuota (Volume MB/GB)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            color: const Color(0xFF030903),
+            child: const Row(
+              children: [
+                Icon(Icons.info_outline, color: Color(0xFF00FF41), size: 12),
+                SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'THROUGHPUT AKTIF = KB/s / MB/s (Kecepatan Detik Ini) • KOLOM DATA = MB / GB (Total Kuota)',
+                    style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 8, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Hacker Table Header with Explicit Units
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             color: const Color(0xFF081208),
@@ -756,14 +775,14 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   flex: 5,
                   child: Text(
-                    'PID // TARGET_PROCESS',
+                    'PID // PROCESS (LIVE SPEED)',
                     style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'OPERATOR',
+                    'OPERATOR [TOTAL]',
                     style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF41), fontSize: 9, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.right,
                   ),
@@ -771,7 +790,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'WIFI',
+                    'WIFI [TOTAL]',
                     style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00E5FF), fontSize: 9, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.right,
                   ),
@@ -779,7 +798,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'AGGREGATE',
+                    'TOTAL VOL',
                     style: TextStyle(fontFamily: 'monospace', color: Color(0xFF39FF14), fontSize: 9, fontWeight: FontWeight.bold),
                     textAlign: TextAlign.right,
                   ),
@@ -801,7 +820,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 color: index % 2 == 0 ? Colors.transparent : const Color(0xFF040A04),
                 child: Row(
                   children: [
-                    // Process Name with Rank
+                    // Process Name with Rank & Live Speed
                     Expanded(
                       flex: 5,
                       child: Column(
@@ -852,10 +871,29 @@ class _DashboardScreenState extends State<DashboardScreen>
                                 '[UID:${app.uid}] ',
                                 style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF005500), fontSize: 8),
                               ),
-                              if (app.isLive)
+                              if (app.isLive) ...[
+                                Container(
+                                  margin: const EdgeInsets.only(left: 2),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF002200),
+                                    borderRadius: BorderRadius.circular(2),
+                                    border: Border.all(color: const Color(0xFF00FF41), width: 0.5),
+                                  ),
+                                  child: Text(
+                                    app.speedFormatted,
+                                    style: const TextStyle(
+                                      fontFamily: 'monospace',
+                                      color: Color(0xFF00FF41),
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ] else
                                 const Text(
-                                  '• ACTIVE_STREAM',
-                                  style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 8, fontWeight: FontWeight.bold),
+                                  '• IDLE 0 KB/s',
+                                  style: TextStyle(fontFamily: 'monospace', color: Color(0xFF005500), fontSize: 8),
                                 ),
                             ],
                           ),
@@ -863,7 +901,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                       ),
                     ),
 
-                    // Operator
+                    // Operator Total Volume
                     Expanded(
                       flex: 3,
                       child: Text(

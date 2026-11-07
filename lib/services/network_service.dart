@@ -100,81 +100,91 @@ class NetworkService {
         uid: 10243,
         appName: 'YouTube',
         packageName: 'com.google.android.youtube',
-        mobileBytes: 1331691520, // 1.24 GB
-        wifiBytes: 4133879808,   // 3.85 GB
+        mobileBytes: 1331691520, // 1.24 GB Total
+        wifiBytes: 4133879808,   // 3.85 GB Total
         isLive: true,
+        currentSpeedKbps: 1250.0, // ⚡ 1.2 MB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 10189,
         appName: 'TikTok',
         packageName: 'com.zhiliaoapp.musically',
-        mobileBytes: 681993216,  // 650.4 MB
-        wifiBytes: 1524629504,   // 1.42 GB
+        mobileBytes: 681993216,  // 650.4 MB Total
+        wifiBytes: 1524629504,   // 1.42 GB Total
         isLive: true,
+        currentSpeedKbps: 450.0, // ⚡ 450 KB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 10052,
         appName: 'Chrome Browser',
         packageName: 'com.android.chrome',
-        mobileBytes: 325255168,  // 310.2 MB
-        wifiBytes: 1181116006,   // 1.10 GB
+        mobileBytes: 325255168,  // 310.2 MB Total
+        wifiBytes: 1181116006,   // 1.10 GB Total
         isLive: true,
+        currentSpeedKbps: 180.0, // ⚡ 180 KB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 10091,
         appName: 'WhatsApp',
         packageName: 'com.whatsapp',
-        mobileBytes: 193986560,  // 185.0 MB
-        wifiBytes: 471859200,    // 450.0 MB
+        mobileBytes: 193986560,  // 185.0 MB Total
+        wifiBytes: 471859200,    // 450.0 MB Total
         isLive: true,
+        currentSpeedKbps: 35.0,  // ⚡ 35 KB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 1000,
         appName: 'Android System / OS',
         packageName: 'android.system',
-        mobileBytes: 88604672,   // 84.5 MB
-        wifiBytes: 335544320,    // 320.0 MB
+        mobileBytes: 88604672,   // 84.5 MB Total
+        wifiBytes: 335544320,    // 320.0 MB Total
         isLive: true,
+        currentSpeedKbps: 14.0,  // ⚡ 14 KB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 10312,
         appName: 'Instagram',
         packageName: 'com.instagram.android',
-        mobileBytes: 75608832,   // 72.1 MB
-        wifiBytes: 293601280,    // 280.0 MB
+        mobileBytes: 75608832,   // 72.1 MB Total
+        wifiBytes: 293601280,    // 280.0 MB Total
         isLive: true,
+        currentSpeedKbps: 310.0, // ⚡ 310 KB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 10145,
         appName: 'Spotify Music',
         packageName: 'com.spotify.music',
-        mobileBytes: 36700160,   // 35.0 MB
-        wifiBytes: 220200960,    // 210.0 MB
+        mobileBytes: 36700160,   // 35.0 MB Total
+        wifiBytes: 220200960,    // 210.0 MB Total
         isLive: true,
+        currentSpeedKbps: 96.0,  // ⚡ 96 KB/s Real-time speed
       ),
       AppUsageInfo(
         uid: 10290,
         appName: 'Telegram',
         packageName: 'org.telegram.messenger',
-        mobileBytes: 29779584,   // 28.4 MB
-        wifiBytes: 146800640,    // 140.0 MB
+        mobileBytes: 29779584,   // 28.4 MB Total
+        wifiBytes: 146800640,    // 140.0 MB Total
         isLive: false,
+        currentSpeedKbps: 0.0,
       ),
       AppUsageInfo(
         uid: 10118,
         appName: 'Google Play Store',
         packageName: 'com.android.vending',
-        mobileBytes: 15728640,   // 15.0 MB
-        wifiBytes: 838860800,    // 800.0 MB
+        mobileBytes: 15728640,   // 15.0 MB Total
+        wifiBytes: 838860800,    // 800.0 MB Total
         isLive: false,
+        currentSpeedKbps: 0.0,
       ),
       AppUsageInfo(
         uid: 10044,
         appName: 'Mobile Legends',
         packageName: 'com.mobile.legends',
-        mobileBytes: 10485760,   // 10.0 MB
-        wifiBytes: 524288000,    // 500.0 MB
+        mobileBytes: 10485760,   // 10.0 MB Total
+        wifiBytes: 524288000,    // 500.0 MB Total
         isLive: false,
+        currentSpeedKbps: 0.0,
       ),
     ];
 
