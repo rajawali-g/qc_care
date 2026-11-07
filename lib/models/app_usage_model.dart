@@ -6,6 +6,7 @@ class AppUsageInfo {
   final String packageName;
   final int mobileBytes;
   final int wifiBytes;
+  final bool isLive;
 
   AppUsageInfo({
     required this.uid,
@@ -13,6 +14,7 @@ class AppUsageInfo {
     required this.packageName,
     required this.mobileBytes,
     required this.wifiBytes,
+    this.isLive = true,
   });
 
   factory AppUsageInfo.fromMap(Map<dynamic, dynamic> map) {
@@ -22,6 +24,7 @@ class AppUsageInfo {
       packageName: (map['packageName'] as String?) ?? 'unknown',
       mobileBytes: (map['mobileBytes'] as num?)?.toInt() ?? 0,
       wifiBytes: (map['wifiBytes'] as num?)?.toInt() ?? 0,
+      isLive: (map['isLive'] as bool?) ?? true,
     );
   }
 

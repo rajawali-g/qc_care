@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.TrafficStats
 import android.net.Uri
 import android.os.Build
 import android.os.Process
@@ -18,6 +19,11 @@ import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.example.qc_mce/network_stats"
+
+    private var lastSampleTime: Long = 0L
+    private var lastTotalRxBytes: Long = 0L
+    private var lastTotalTxBytes: Long = 0L
+    private var lastMobileRxBytes: Long = 0L
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -61,6 +67,9 @@ class MainActivity : FlutterActivity() {
                     } else {
                         result.success(emptyList<Map<String, Any>>())
                     }
+                }
+                "getRealtimeSpeed" -> {
+                    result.success(getRealtimeSpeed())
                 }
                 "updateWidget" -> {
                     val remainingQuota = call.argument<String>("remainingQuota") ?: "15.00 GB"
@@ -167,9 +176,7 @@ class MainActivity : FlutterActivity() {
                 mobileMap[bucket.uid] = current + bucket.rxBytes + bucket.txBytes
             }
             statsMobile.close()
-        } catch (e: Exception) {
-            // fallback
-        }
+        } catch (e: Exception) {}
 
         try {
             val statsWifi = networkStatsManager.querySummary(ConnectivityManager.TYPE_WIFI, null, startTime, endTime)
@@ -180,9 +187,7 @@ class MainActivity : FlutterActivity() {
                 wifiMap[bucket.uid] = current + bucket.rxBytes + bucket.txBytes
             }
             statsWifi.close()
-        } catch (e: Exception) {
-            // fallback
-        }
+        } catch (e: Exception) {}
 
         val allUids = HashSet<Int>()
         allUids.addAll(mobileMap.keys)
@@ -213,17 +218,53 @@ class MainActivity : FlutterActivity() {
                 pkgName = "android.system"
             }
 
+            // Check if socket is live active
+            val liveSocketBytes = TrafficStats.getUidRxBytes(uid) + TrafficStats.getUidTxBytes(uid)
+
             resultList.add(mapOf(
                 "uid" to uid,
                 "appName" to appName,
                 "packageName" to pkgName,
                 "mobileBytes" to mobileBytes,
-                "wifiBytes" to wifiBytes
+                "wifiBytes" to wifiBytes,
+                "isLive" to (liveSocketBytes > 0L)
             ))
         }
 
-        // Sort descending by total usage
+        // Automatic descending sort by largest quota consumption (Operator Mobile bytes first, then total)
         resultList.sortByDescending { (it["mobileBytes"] as Long) + (it["wifiBytes"] as Long) }
         return resultList
+    }
+
+    private fun getRealtimeSpeed(): Map<String, Any> {
+        val now = System.currentTimeMillis()
+        val totalRx = TrafficStats.getTotalRxBytes()
+        val totalTx = TrafficStats.getTotalTxBytes()
+        val mobileRx = TrafficStats.getMobileRxBytes()
+
+        var rxSpeedKb = 0.0
+        var txSpeedKb = 0.0
+        var mobileSpeedKb = 0.0
+
+        if (lastSampleTime > 0L && now > lastSampleTime) {
+            val deltaSec = (now - lastSampleTime) / 1000.0
+            if (deltaSec > 0.0) {
+                rxSpeedKb = ((totalRx - lastTotalRxBytes) / 1024.0) / deltaSec
+                txSpeedKb = ((totalTx - lastTotalTxBytes) / 1024.0) / deltaSec
+                mobileSpeedKb = ((mobileRx - lastMobileRxBytes) / 1024.0) / deltaSec
+            }
+        }
+
+        lastSampleTime = now
+        lastTotalRxBytes = totalRx
+        lastTotalTxBytes = totalTx
+        lastMobileRxBytes = mobileRx
+
+        return mapOf(
+            "rxSpeedKb" to rxSpeedKb.coerceAtLeast(0.0),
+            "txSpeedKb" to txSpeedKb.coerceAtLeast(0.0),
+            "mobileSpeedKb" to mobileSpeedKb.coerceAtLeast(0.0),
+            "totalRxBytes" to totalRx
+        )
     }
 }

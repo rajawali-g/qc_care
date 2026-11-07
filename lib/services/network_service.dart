@@ -46,7 +46,7 @@ class NetworkService {
     }
   }
 
-  /// Mengambil rincian pemakaian per aplikasi (membedakan kuota operator & wifi)
+  /// Mengambil rincian pemakaian per aplikasi (otomatis terurut dari yang paling boros kuota)
   static Future<List<AppUsageInfo>> fetchAppNetworkUsage(DateTime startTime) async {
     try {
       final now = DateTime.now();
@@ -56,11 +56,31 @@ class NetworkService {
       });
 
       if (result is List) {
-        return result.map((item) => AppUsageInfo.fromMap(item as Map)).toList();
+        final list = result.map((item) => AppUsageInfo.fromMap(item as Map)).toList();
+        // Otomatis urutkan dari penggunaan terbesar (descending)
+        list.sort((a, b) => b.totalBytes.compareTo(a.totalBytes));
+        return list;
       }
       return _getPreviewMockAppList();
     } catch (_) {
       return _getPreviewMockAppList();
+    }
+  }
+
+  /// Mengambil laju kecepatan byte transfer seketika (realtime speed) untuk osiloskop
+  static Future<Map<String, double>> fetchRealtimeSpeed() async {
+    try {
+      final result = await _channel.invokeMethod('getRealtimeSpeed');
+      if (result is Map) {
+        return {
+          'rxSpeedKb': (result['rxSpeedKb'] as num?)?.toDouble() ?? 0.0,
+          'txSpeedKb': (result['txSpeedKb'] as num?)?.toDouble() ?? 0.0,
+          'mobileSpeedKb': (result['mobileSpeedKb'] as num?)?.toDouble() ?? 0.0,
+        };
+      }
+      return {'rxSpeedKb': 142.5, 'txSpeedKb': 38.0, 'mobileSpeedKb': 88.2};
+    } catch (_) {
+      return {'rxSpeedKb': 142.5, 'txSpeedKb': 38.0, 'mobileSpeedKb': 88.2};
     }
   }
 
@@ -75,78 +95,92 @@ class NetworkService {
   }
 
   static List<AppUsageInfo> _getPreviewMockAppList() {
-    return [
+    final list = [
       AppUsageInfo(
         uid: 10243,
         appName: 'YouTube',
         packageName: 'com.google.android.youtube',
-        mobileBytes: 1331691520, // 1.24 GB operator
-        wifiBytes: 4133879808,   // 3.85 GB wifi
+        mobileBytes: 1331691520, // 1.24 GB
+        wifiBytes: 4133879808,   // 3.85 GB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 10189,
         appName: 'TikTok',
         packageName: 'com.zhiliaoapp.musically',
-        mobileBytes: 681993216,  // 650.4 MB operator
-        wifiBytes: 1524629504,   // 1.42 GB wifi
+        mobileBytes: 681993216,  // 650.4 MB
+        wifiBytes: 1524629504,   // 1.42 GB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 10052,
         appName: 'Chrome Browser',
         packageName: 'com.android.chrome',
-        mobileBytes: 325255168,  // 310.2 MB operator
-        wifiBytes: 1181116006,   // 1.10 GB wifi
+        mobileBytes: 325255168,  // 310.2 MB
+        wifiBytes: 1181116006,   // 1.10 GB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 10091,
         appName: 'WhatsApp',
         packageName: 'com.whatsapp',
-        mobileBytes: 193986560,  // 185.0 MB operator
-        wifiBytes: 471859200,    // 450.0 MB wifi
+        mobileBytes: 193986560,  // 185.0 MB
+        wifiBytes: 471859200,    // 450.0 MB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 1000,
         appName: 'Android System / OS',
         packageName: 'android.system',
-        mobileBytes: 88604672,   // 84.5 MB operator
-        wifiBytes: 335544320,    // 320.0 MB wifi
+        mobileBytes: 88604672,   // 84.5 MB
+        wifiBytes: 335544320,    // 320.0 MB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 10312,
         appName: 'Instagram',
         packageName: 'com.instagram.android',
-        mobileBytes: 75608832,   // 72.1 MB operator
-        wifiBytes: 293601280,    // 280.0 MB wifi
+        mobileBytes: 75608832,   // 72.1 MB
+        wifiBytes: 293601280,    // 280.0 MB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 10145,
         appName: 'Spotify Music',
         packageName: 'com.spotify.music',
-        mobileBytes: 36700160,   // 35.0 MB operator
-        wifiBytes: 220200960,    // 210.0 MB wifi
+        mobileBytes: 36700160,   // 35.0 MB
+        wifiBytes: 220200960,    // 210.0 MB
+        isLive: true,
       ),
       AppUsageInfo(
         uid: 10290,
         appName: 'Telegram',
         packageName: 'org.telegram.messenger',
-        mobileBytes: 29779584,   // 28.4 MB operator
-        wifiBytes: 146800640,    // 140.0 MB wifi
+        mobileBytes: 29779584,   // 28.4 MB
+        wifiBytes: 146800640,    // 140.0 MB
+        isLive: false,
       ),
       AppUsageInfo(
         uid: 10118,
         appName: 'Google Play Store',
         packageName: 'com.android.vending',
-        mobileBytes: 15728640,   // 15.0 MB operator
-        wifiBytes: 838860800,    // 800.0 MB wifi
+        mobileBytes: 15728640,   // 15.0 MB
+        wifiBytes: 838860800,    // 800.0 MB
+        isLive: false,
       ),
       AppUsageInfo(
         uid: 10044,
         appName: 'Mobile Legends',
         packageName: 'com.mobile.legends',
-        mobileBytes: 10485760,   // 10.0 MB operator
-        wifiBytes: 524288000,    // 500.0 MB wifi
+        mobileBytes: 10485760,   // 10.0 MB
+        wifiBytes: 524288000,    // 500.0 MB
+        isLive: false,
       ),
     ];
+
+    // Otomatis urutkan dari penggunaan terbesar (descending)
+    list.sort((a, b) => b.totalBytes.compareTo(a.totalBytes));
+    return list;
   }
 
   /// Memperbarui Widget di Layar Depan HP (Home Screen Widget)

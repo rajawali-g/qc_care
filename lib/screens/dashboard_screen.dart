@@ -584,32 +584,63 @@ class _DashboardScreenState extends State<DashboardScreen>
                 color: index % 2 == 0 ? Colors.transparent : const Color(0xFF040A04),
                 child: Row(
                   children: [
-                    // Process Name
+                    // Process Name with Rank
                     Expanded(
                       flex: 5,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            '> ${app.appName}',
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              color: Color(0xFF00FF41),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Text(
+                                '#${(index + 1).toString().padLeft(2, '0')} ',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  color: index == 0 ? const Color(0xFF00FF41) : const Color(0xFF008F11),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  app.appName,
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    color: index == 0 ? const Color(0xFF39FF14) : const Color(0xFF00FF41),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              if (index == 0)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 4),
+                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF00FF41),
+                                    borderRadius: BorderRadius.circular(2),
+                                  ),
+                                  child: const Text(
+                                    'TOP',
+                                    style: TextStyle(fontFamily: 'monospace', color: Colors.black, fontSize: 8, fontWeight: FontWeight.w900),
+                                  ),
+                                ),
+                            ],
                           ),
-                          Text(
-                            '[${app.uid}] ${app.packageName}',
-                            style: const TextStyle(
-                              fontFamily: 'monospace',
-                              color: Color(0xFF006600),
-                              fontSize: 8,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          Row(
+                            children: [
+                              Text(
+                                '[UID:${app.uid}] ',
+                                style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF005500), fontSize: 8),
+                              ),
+                              if (app.isLive)
+                                const Text(
+                                  '• ACTIVE_STREAM',
+                                  style: TextStyle(fontFamily: 'monospace', color: Color(0xFF008F11), fontSize: 8, fontWeight: FontWeight.bold),
+                                ),
+                            ],
                           ),
                         ],
                       ),
