@@ -5,6 +5,7 @@ import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.Uri
 import android.os.Build
@@ -44,6 +45,21 @@ class MainActivity : FlutterActivity() {
                         }
                     } else {
                         result.error("UNSUPPORTED_VERSION", "Android 6.0 (API 23) ke atas diperlukan", null)
+                    }
+                }
+                "getAppNetworkUsage" -> {
+                    val startTime = (call.argument<Number>("startTime"))?.toLong() ?: 0L
+                    val endTime = (call.argument<Number>("endTime"))?.toLong() ?: System.currentTimeMillis()
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        try {
+                            val appStats = queryAppNetworkUsage(startTime, endTime)
+                            result.success(appStats)
+                        } catch (e: Exception) {
+                            result.error("APP_STATS_ERROR", e.localizedMessage, null)
+                        }
+                    } else {
+                        result.success(emptyList<Map<String, Any>>())
                     }
                 }
                 "updateWidget" -> {
@@ -133,5 +149,81 @@ class MainActivity : FlutterActivity() {
             "todayWifiBytes" to todayWifi,
             "cycleWifiBytes" to cycleWifi
         )
+    }
+
+    private fun queryAppNetworkUsage(startTime: Long, endTime: Long): List<Map<String, Any>> {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return emptyList()
+
+        val networkStatsManager = getSystemService(Context.NETWORK_STATS_SERVICE) as NetworkStatsManager
+        val mobileMap = HashMap<Int, Long>()
+        val wifiMap = HashMap<Int, Long>()
+
+        try {
+            val statsMobile = networkStatsManager.querySummary(ConnectivityManager.TYPE_MOBILE, null, startTime, endTime)
+            val bucket = NetworkStats.Bucket()
+            while (statsMobile.hasNextBucket()) {
+                statsMobile.getNextBucket(bucket)
+                val current = mobileMap.getOrDefault(bucket.uid, 0L)
+                mobileMap[bucket.uid] = current + bucket.rxBytes + bucket.txBytes
+            }
+            statsMobile.close()
+        } catch (e: Exception) {
+            // fallback
+        }
+
+        try {
+            val statsWifi = networkStatsManager.querySummary(ConnectivityManager.TYPE_WIFI, null, startTime, endTime)
+            val bucket = NetworkStats.Bucket()
+            while (statsWifi.hasNextBucket()) {
+                statsWifi.getNextBucket(bucket)
+                val current = wifiMap.getOrDefault(bucket.uid, 0L)
+                wifiMap[bucket.uid] = current + bucket.rxBytes + bucket.txBytes
+            }
+            statsWifi.close()
+        } catch (e: Exception) {
+            // fallback
+        }
+
+        val allUids = HashSet<Int>()
+        allUids.addAll(mobileMap.keys)
+        allUids.addAll(wifiMap.keys)
+
+        val resultList = ArrayList<Map<String, Any>>()
+        val pm = packageManager
+
+        for (uid in allUids) {
+            val mobileBytes = mobileMap.getOrDefault(uid, 0L)
+            val wifiBytes = wifiMap.getOrDefault(uid, 0L)
+            if (mobileBytes == 0L && wifiBytes == 0L) continue
+
+            var appName = "Process (UID $uid)"
+            var pkgName = "unknown"
+
+            val packages = pm.getPackagesForUid(uid)
+            if (!packages.isNullOrEmpty()) {
+                pkgName = packages[0]
+                try {
+                    val appInfo = pm.getApplicationInfo(pkgName, 0)
+                    appName = pm.getApplicationLabel(appInfo).toString()
+                } catch (e: Exception) {
+                    appName = pkgName
+                }
+            } else if (uid == 1000) {
+                appName = "Android System"
+                pkgName = "android.system"
+            }
+
+            resultList.add(mapOf(
+                "uid" to uid,
+                "appName" to appName,
+                "packageName" to pkgName,
+                "mobileBytes" to mobileBytes,
+                "wifiBytes" to wifiBytes
+            ))
+        }
+
+        // Sort descending by total usage
+        resultList.sortByDescending { (it["mobileBytes"] as Long) + (it["wifiBytes"] as Long) }
+        return resultList
     }
 }
