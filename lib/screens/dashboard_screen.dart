@@ -21,6 +21,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   int _warningPercent = 20;
   NetworkUsageData _usageData = NetworkUsageData.empty();
 
+  final List<String> _terminalLogs = [
+    '[SYS_INIT] KERNEL_NETLINK_ESTABLISHED -> PID 3892',
+    '[IFACE] rmnet_data0 -> STATUS_UP (LTE-A/5G)',
+    '[DHCP] LEASE_ACQUIRED -> IP: 10.142.88.214/24',
+    '[STAT] SYSTEM_USAGE_SYNC -> OK',
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -37,7 +44,6 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Re-check permission and update data when user returns from settings
       _refreshAll();
     }
   }
@@ -55,7 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
       final cycleStart = QuotaPreferences.getCycleStartDate(resetDay);
       usage = await NetworkService.fetchNetworkUsage(cycleStart);
 
-      // Auto update the home screen widget
       await NetworkService.syncHomeScreenWidget(
         totalQuotaGb: totalQuota,
         cycleUsedGb: usage.cycleMobileGb,
@@ -71,12 +76,13 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
         _hasPermission = hasPerm;
         _usageData = usage;
         _isLoading = false;
+        
+        final now = DateTime.now();
+        final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+        _terminalLogs.add('[$timeStr] TELEMETRY_REFRESH -> ${usage.cycleMobileGb.toStringAsFixed(2)}GB USED');
+        if (_terminalLogs.length > 5) _terminalLogs.removeAt(0);
       });
     }
-  }
-
-  Future<void> _askPermission() async {
-    await NetworkService.requestUsagePermission();
   }
 
   Future<void> _manualSyncWidget() async {
@@ -87,14 +93,22 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     );
 
     if (mounted) {
+      final now = DateTime.now();
+      final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}';
+      setState(() {
+        _terminalLogs.add('[$timeStr] WIDGET_RPC_SYNC -> ${success ? "ACK_SUCCESS" : "ERROR"}');
+        if (_terminalLogs.length > 5) _terminalLogs.removeAt(0);
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             success
-                ? 'Widget di layar depan berhasil disinkronkan!'
-                : 'Gagal memperbarui widget',
+                ? '>> [SUCCESS] WIDGET LAYAR DEPAN TELAH DISINKRONKAN'
+                : '>> [ERR] GAGAL MEMPERBARUI WIDGET',
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
           ),
-          backgroundColor: success ? const Color(0xFF2E7D32) : Colors.redAccent,
+          backgroundColor: success ? const Color(0xFF00FF88).withOpacity(0.9) : const Color(0xFFFF2E63),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -108,325 +122,398 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     final percentRemaining = _totalQuotaGb > 0
         ? ((remainingGb / _totalQuotaGb) * 100).clamp(0.0, 100.0)
         : 0.0;
-    final percentUsed = 100.0 - percentRemaining;
 
     final daysRemaining = QuotaPreferences.getDaysUntilNextReset(_resetDay);
 
-    Color statusColor;
+    Color neonColor;
     if (percentRemaining <= 10) {
-      statusColor = const Color(0xFFEF5350); // Red
+      neonColor = const Color(0xFFFF2E63); // Cyber Red
     } else if (percentRemaining <= _warningPercent) {
-      statusColor = const Color(0xFFFFA726); // Orange
+      neonColor = const Color(0xFFFFB300); // Warning Amber
     } else {
-      statusColor = const Color(0xFF26A69A); // Teal / Green
+      neonColor = const Color(0xFF00E5FF); // Neon Cyan
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF10131A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF161B26),
-        elevation: 0,
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1976D2),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text(
-                'QC_MCE',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Text(
-              'Pemantau Kuota',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white70),
-            tooltip: 'Segarkan data',
-            onPressed: _refreshAll,
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white70),
-            tooltip: 'Pengaturan Paket',
-            onPressed: widget.onOpenSettings,
-          ),
-        ],
-      ),
+      backgroundColor: const Color(0xFF07090E),
+      appBar: _buildTechAppBar(),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF29B6F6)),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: Color(0xFF00E5FF)),
+                  SizedBox(height: 12),
+                  Text(
+                    'ACQUIRING_NETWORK_TELEMETRY...',
+                    style: TextStyle(fontFamily: 'monospace', color: Color(0xFF00E5FF), fontSize: 12),
+                  ),
+                ],
+              ),
             )
           : RefreshIndicator(
               onRefresh: _refreshAll,
-              color: const Color(0xFF29B6F6),
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (!_hasPermission) ...[
-                _buildPermissionAlert(),
-                const SizedBox(height: 16),
-              ],
+              color: const Color(0xFF00E5FF),
+              backgroundColor: const Color(0xFF0F1523),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // System Status Strip
+                    _buildSystemStatusStrip(),
 
-              // Main Quota Gauge Card
-              _buildMainQuotaCard(
-                remainingGb: remainingGb,
-                percentRemaining: percentRemaining,
-                percentUsed: percentUsed,
-                usedGb: usedGb,
-                daysRemaining: daysRemaining,
-                statusColor: statusColor,
-              ),
+                    const SizedBox(height: 12),
 
-              const SizedBox(height: 16),
+                    if (!_hasPermission) ...[
+                      _buildTechPermissionAlert(),
+                      const SizedBox(height: 12),
+                    ],
 
-              // Widget Action Bar
-              _buildWidgetActionPill(),
+                    // Main HUD Cyber Card
+                    _buildCyberHudCard(
+                      remainingGb: remainingGb,
+                      percentRemaining: percentRemaining,
+                      usedGb: usedGb,
+                      daysRemaining: daysRemaining,
+                      neonColor: neonColor,
+                    ),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 14),
 
-              // Breakdown Header
-              const Text(
-                'Rincian Penggunaan Internet',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+                    // Home Screen Widget Controller Bar
+                    _buildWidgetCyberPill(),
+
+                    const SizedBox(height: 16),
+
+                    // Section Title
+                    Row(
+                      children: [
+                        Container(width: 3, height: 14, color: const Color(0xFF00E5FF)),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'TELEMETRY_PACKETS_BREAKDOWN',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            color: Color(0xFF90CAF9),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.0,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // 2x2 Tech Matrix
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildCyberMetricCard(
+                            tag: 'RX // CELLULAR_TODAY',
+                            value: NetworkUsageData.formatBytes(_usageData.todayMobileBytes),
+                            subtitle: NetworkUsageData.formatPackets(_usageData.todayMobileBytes),
+                            accentColor: const Color(0xFF00E5FF),
+                            icon: Icons.download_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildCyberMetricCard(
+                            tag: 'TOTAL // CELLULAR_CYCLE',
+                            value: NetworkUsageData.formatBytes(_usageData.cycleMobileBytes),
+                            subtitle: 'Limit: ${_totalQuotaGb.toStringAsFixed(1)} GB',
+                            accentColor: const Color(0xFF00FF88),
+                            icon: Icons.pie_chart_outline_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildCyberMetricCard(
+                            tag: 'WLAN // 802.11 TODAY',
+                            value: NetworkUsageData.formatBytes(_usageData.todayWifiBytes),
+                            subtitle: NetworkUsageData.formatPackets(_usageData.todayWifiBytes),
+                            accentColor: const Color(0xFFB388FF),
+                            icon: Icons.wifi_tethering_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildCyberMetricCard(
+                            tag: 'TOTAL // WLAN_PAYLOAD',
+                            value: NetworkUsageData.formatBytes(_usageData.cycleWifiBytes),
+                            subtitle: 'Unmetered Interface',
+                            accentColor: const Color(0xFFFFB300),
+                            icon: Icons.lan_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Terminal Live Feed
+                    _buildTerminalConsole(),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
+            ),
+    );
+  }
 
-              // 2x2 Grid of detailed usage
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildUsageItemCard(
-                      title: 'Data Seluler Hari Ini',
-                      value: NetworkUsageData.formatBytes(_usageData.todayMobileBytes),
-                      icon: Icons.calendar_today_rounded,
-                      iconColor: const Color(0xFF42A5F5),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildUsageItemCard(
-                      title: 'Total Seluler Siklus Ini',
-                      value: NetworkUsageData.formatBytes(_usageData.cycleMobileBytes),
-                      icon: Icons.data_usage_rounded,
-                      iconColor: const Color(0xFF66BB6A),
-                    ),
-                  ),
-                ],
+  PreferredSizeWidget _buildTechAppBar() {
+    return AppBar(
+      backgroundColor: const Color(0xFF090D15),
+      elevation: 0,
+      titleSpacing: 14,
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00E5FF).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.4)),
+            ),
+            child: const Text(
+              'QC_MCE',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF00E5FF),
+                letterSpacing: 1.2,
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildUsageItemCard(
-                      title: 'WiFi Hari Ini',
-                      value: NetworkUsageData.formatBytes(_usageData.todayWifiBytes),
-                      icon: Icons.wifi_rounded,
-                      iconColor: const Color(0xFFAB47BC),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildUsageItemCard(
-                      title: 'Total WiFi Siklus Ini',
-                      value: NetworkUsageData.formatBytes(_usageData.cycleWifiBytes),
-                      icon: Icons.network_check_rounded,
-                      iconColor: const Color(0xFFFF7043),
-                    ),
-                  ),
-                ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'NET_OPERATIONS_CENTER',
+                style: TextStyle(fontFamily: 'monospace', fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
               ),
-
-              const SizedBox(height: 24),
-
-              // Tips info card
-              _buildTipsCard(),
+              Text(
+                'SYSTEM_METRICS // v1.0.2',
+                style: TextStyle(fontFamily: 'monospace', fontSize: 9, color: Color(0xFF546E7A)),
+              ),
             ],
           ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.refresh_rounded, color: Color(0xFF00E5FF), size: 20),
+          tooltip: 'Sync Data',
+          onPressed: _refreshAll,
+        ),
+        IconButton(
+          icon: const Icon(Icons.tune_rounded, color: Color(0xFF90A4AE), size: 20),
+          tooltip: 'Configure',
+          onPressed: widget.onOpenSettings,
+        ),
+      ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(
+          height: 1,
+          color: const Color(0xFF1B2333),
         ),
       ),
     );
   }
 
-  Widget _buildPermissionAlert() {
+  Widget _buildSystemStatusStrip() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2216),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFFF9800).withOpacity(0.5)),
+        color: const Color(0xFF0D121D),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF1B2438)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB74D), size: 24),
-              SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Izin Akses Penggunaan Diperlukan',
-                  style: TextStyle(
-                    color: Color(0xFFFFE082),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF00FF88),
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: Color(0xFF00FF88), blurRadius: 6, spreadRadius: 1),
+                  ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'LINK: ONLINE [${_usageData.networkType}]',
+                style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF00FF88), fontSize: 10, fontWeight: FontWeight.bold),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          const Text(
-            'Agar QC_MCE dapat membaca pemakaian kuota data Anda dari sistem Android secara langsung, aktifkan izin "Akses Penggunaan" untuk aplikasi ini.',
-            style: TextStyle(color: Color(0xFFFFECB3), fontSize: 12, height: 1.3),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: FilledButton.tonal(
-              onPressed: _askPermission,
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFFF9800),
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          Row(
+            children: [
+              const Icon(Icons.speed_rounded, color: Color(0xFF00E5FF), size: 12),
+              const SizedBox(width: 4),
+              Text(
+                'LATENCY: ${_usageData.latencyMs}ms',
+                style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF80D8FF), fontSize: 10),
               ),
-              child: const Text('Buka Pengaturan Izin', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMainQuotaCard({
+  Widget _buildCyberHudCard({
     required double remainingGb,
     required double percentRemaining,
-    required double percentUsed,
     required double usedGb,
     required int daysRemaining,
-    required Color statusColor,
+    required Color neonColor,
   }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1B2233), Color(0xFF141926)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF263248)),
+        color: const Color(0xFF0C101A),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: neonColor.withOpacity(0.35), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.4),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: neonColor.withOpacity(0.08),
+            blurRadius: 20,
+            spreadRadius: 2,
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
                 children: [
-                  Icon(Icons.sim_card_outlined, color: statusColor, size: 20),
+                  Icon(Icons.radar_rounded, color: neonColor, size: 18),
                   const SizedBox(width: 8),
                   const Text(
-                    'Sisa Kuota Paket Data',
-                    style: TextStyle(color: Color(0xFF90CAF9), fontSize: 13, fontWeight: FontWeight.w600),
+                    'PAYLOAD // QUOTA_REMAINING',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      color: Color(0xFFCFD8DC),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
                   ),
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: statusColor.withOpacity(0.4)),
+                  color: neonColor.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: neonColor.withOpacity(0.5)),
                 ),
                 child: Text(
-                  '${percentRemaining.toStringAsFixed(0)}% Sisa',
-                  style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.bold),
+                  '${percentRemaining.toStringAsFixed(0)}% CAPACITY',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    color: neonColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
+
           const SizedBox(height: 14),
+
+          // Big Tech Readout
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
               Text(
                 remainingGb.toStringAsFixed(2),
-                style: const TextStyle(
+                style: TextStyle(
+                  fontFamily: 'monospace',
                   color: Colors.white,
-                  fontSize: 38,
+                  fontSize: 42,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
+                  letterSpacing: -1.0,
+                  shadows: [
+                    Shadow(color: neonColor.withOpacity(0.6), blurRadius: 10),
+                  ],
                 ),
               ),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'GB',
                 style: TextStyle(
-                  color: Color(0xFF64B5F6),
+                  fontFamily: 'monospace',
+                  color: neonColor,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const Spacer(),
-              Text(
-                'dari ${_totalQuotaGb.toStringAsFixed(1)} GB',
-                style: const TextStyle(color: Color(0xFF8892B0), fontSize: 13),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'TOTAL: ${_totalQuotaGb.toStringAsFixed(1)} GB',
+                    style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF90A4AE), fontSize: 11),
+                  ),
+                  Text(
+                    'CONSUMED: ${usedGb.toStringAsFixed(2)} GB',
+                    style: TextStyle(fontFamily: 'monospace', color: neonColor.withOpacity(0.8), fontSize: 11),
+                  ),
+                ],
               ),
             ],
           ),
+
           const SizedBox(height: 14),
 
-          // Linear Progress Bar
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: (percentRemaining / 100).clamp(0.0, 1.0),
-              backgroundColor: const Color(0xFF283149),
-              color: statusColor,
-              minHeight: 10,
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // Footnotes (Terpakai & Sisa Hari)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Cyber Segmented Progress Bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Terpakai: ${usedGb.toStringAsFixed(2)} GB',
-                style: const TextStyle(color: Color(0xFFB0BEC5), fontSize: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: (percentRemaining / 100).clamp(0.0, 1.0),
+                  backgroundColor: const Color(0xFF161F30),
+                  color: neonColor,
+                  minHeight: 8,
+                ),
               ),
+              const SizedBox(height: 8),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Icon(Icons.timer_outlined, color: Color(0xFF90A4AE), size: 14),
-                  const SizedBox(width: 4),
                   Text(
-                    'Reset: $daysRemaining hari lagi',
-                    style: const TextStyle(color: Color(0xFFB0BEC5), fontSize: 12),
+                    'CYCLE_EXPIRE: T-$daysRemaining DAYS',
+                    style: const TextStyle(fontFamily: 'monospace', color: Color(0xFF78909C), fontSize: 10),
+                  ),
+                  Text(
+                    'STATUS: ${percentRemaining <= 10 ? "CRITICAL" : (percentRemaining <= 20 ? "ALERT" : "NOMINAL")}',
+                    style: TextStyle(fontFamily: 'monospace', color: neonColor, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
@@ -437,29 +524,37 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     );
   }
 
-  Widget _buildWidgetActionPill() {
+  Widget _buildWidgetCyberPill() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF161E2E),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF222E46)),
+        color: const Color(0xFF0C101A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF1A2338)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.home_outlined, color: Color(0xFF4FC3F7), size: 22),
-          const SizedBox(width: 10),
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: const Color(0xFF00E5FF).withOpacity(0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF00E5FF).withOpacity(0.3)),
+            ),
+            child: const Icon(Icons.widgets_rounded, color: Color(0xFF00E5FF), size: 18),
+          ),
+          const SizedBox(width: 12),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Widget Layar Depan HP',
-                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  'ANDROID_HOMESCREEN_WIDGET',
+                  style: TextStyle(fontFamily: 'monospace', color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Tampil real-time di layar depan Anda',
-                  style: TextStyle(color: Color(0xFF90A4AE), fontSize: 11),
+                  'Active background provider & telemetric sync',
+                  style: TextStyle(color: Color(0xFF78909C), fontSize: 10),
                 ),
               ],
             ),
@@ -472,73 +567,79 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
               );
             },
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              foregroundColor: const Color(0xFF81D4FA),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              foregroundColor: const Color(0xFF80D8FF),
             ),
-            child: const Text('Cara Pasang', style: TextStyle(fontSize: 12)),
+            child: const Text('GUIDE', style: TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.bold)),
           ),
-          FilledButton.tonal(
+          FilledButton(
             onPressed: _manualSyncWidget,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF0288D1),
-              foregroundColor: Colors.white,
+              backgroundColor: const Color(0xFF00E5FF),
+              foregroundColor: Colors.black,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
             ),
-            child: const Text('Sync', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            child: const Text('SYNC', style: TextStyle(fontFamily: 'monospace', fontSize: 11, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildUsageItemCard({
-    required String title,
+  Widget _buildCyberMetricCard({
+    required String tag,
     required String value,
+    required String subtitle,
+    required Color accentColor,
     required IconData icon,
-    required Color iconColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF181E2B),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF242C3F)),
+        color: const Color(0xFF0A0E18),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF182236)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: iconColor, size: 16),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    color: Color(0xFF90A4AE),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                tag,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  color: Color(0xFF78909C),
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
                 ),
               ),
+              Icon(icon, color: accentColor, size: 14),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
+              fontFamily: 'monospace',
               color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              shadows: [
+                Shadow(color: accentColor.withOpacity(0.3), blurRadius: 4),
+              ],
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            subtitle,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              color: accentColor.withOpacity(0.8),
+              fontSize: 10,
             ),
           ),
         ],
@@ -546,32 +647,92 @@ class _DashboardScreenState extends State<DashboardScreen> with WidgetsBindingOb
     );
   }
 
-  Widget _buildTipsCard() {
+  Widget _buildTerminalConsole() {
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF141924),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF1F2738)),
+        color: const Color(0xFF05080D),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF162030)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.lightbulb_outline_rounded, color: Color(0xFFFFCA28), size: 20),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Tips: Setelah menambahkan Widget QC_MCE ke layar depan HP, Anda cukup mengetuk widget untuk membuka aplikasi atau melihat pembaruan seketika.',
-              style: TextStyle(
-                color: Colors.grey.shade400,
-                fontSize: 11,
-                height: 1.4,
+          const Row(
+            children: [
+              Icon(Icons.terminal_rounded, color: Color(0xFF00FF88), size: 14),
+              SizedBox(width: 6),
+              Text(
+                'CONSOLE_OUTPUT // LIVE_EVENT_LOG',
+                style: TextStyle(
+                  fontFamily: 'monospace',
+                  color: Color(0xFF00FF88),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ..._terminalLogs.map(
+            (log) => Padding(
+              padding: const EdgeInsets.only(bottom: 3),
+              child: Text(
+                '>> $log',
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  color: Color(0xFF90A4AE),
+                  fontSize: 10,
+                  height: 1.3,
+                ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTechPermissionAlert() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1308),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFFB300).withOpacity(0.5)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFB300), size: 22),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'PERM_DENIED: PACKAGE_USAGE_STATS',
+                  style: TextStyle(fontFamily: 'monospace', color: Color(0xFFFFE082), fontWeight: FontWeight.bold, fontSize: 11),
+                ),
+                Text(
+                  'Aktifkan akses penggunaan agar pembacaan byte data akurat.',
+                  style: TextStyle(color: Color(0xFFFFD54F), fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+          FilledButton(
+            onPressed: () => NetworkService.requestUsagePermission(),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFFFB300),
+              foregroundColor: Colors.black,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            ),
+            child: const Text('GRANT', style: TextStyle(fontFamily: 'monospace', fontWeight: FontWeight.bold, fontSize: 11)),
           ),
         ],
       ),
     );
   }
 }
-

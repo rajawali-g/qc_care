@@ -82,3 +82,4 @@ jobs:
             release-assets/QC_MCE-${{ env.TAG_NAME }}.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

@@ -9,7 +9,7 @@ void main() {
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF161B26),
+      systemNavigationBarColor: Color(0xFF090D15),
       systemNavigationBarIconBrightness: Brightness.light,
     ),
   );
@@ -26,14 +26,13 @@ class QcMceApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF10131A),
+        scaffoldBackgroundColor: const Color(0xFF07090E),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E88E5),
+          seedColor: const Color(0xFF00E5FF),
           brightness: Brightness.dark,
-          surface: const Color(0xFF181E2B),
+          surface: const Color(0xFF0C101A),
         ),
         useMaterial3: true,
-        fontFamily: null,
       ),
       home: const MainNavigationScreen(),
     );
@@ -70,26 +69,32 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         index: _currentIndex,
         children: screens,
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _currentIndex,
-        backgroundColor: const Color(0xFF161B26),
-        indicatorColor: const Color(0xFF1E88E5).withOpacity(0.3),
-        surfaceTintColor: Colors.transparent,
-        onDestinationSelected: (index) {
-          setState(() => _currentIndex = index);
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.speed_rounded),
-            selectedIcon: Icon(Icons.speed_rounded, color: Color(0xFF64B5F6)),
-            label: 'Pemantauan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings_rounded, color: Color(0xFF64B5F6)),
-            label: 'Pengaturan',
-          ),
-        ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF090D15),
+          border: Border(top: BorderSide(color: Color(0xFF1B2333))),
+        ),
+        child: NavigationBar(
+          selectedIndex: _currentIndex,
+          backgroundColor: Colors.transparent,
+          indicatorColor: const Color(0xFF00E5FF).withOpacity(0.18),
+          surfaceTintColor: Colors.transparent,
+          onDestinationSelected: (index) {
+            setState(() => _currentIndex = index);
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.radar_rounded, color: Color(0xFF78909C)),
+              selectedIcon: Icon(Icons.radar_rounded, color: Color(0xFF00E5FF)),
+              label: 'TELEMETRY',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.tune_rounded, color: Color(0xFF78909C)),
+              selectedIcon: Icon(Icons.tune_rounded, color: Color(0xFF00E5FF)),
+              label: 'SYS_CONFIG',
+            ),
+          ],
+        ),
       ),
     );
   }

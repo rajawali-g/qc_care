@@ -3,6 +3,9 @@ class NetworkUsageData {
   final int cycleMobileBytes;
   final int todayWifiBytes;
   final int cycleWifiBytes;
+  final int latencyMs;
+  final String networkType;
+  final String ipAddress;
   final DateTime lastUpdated;
 
   NetworkUsageData({
@@ -10,6 +13,9 @@ class NetworkUsageData {
     required this.cycleMobileBytes,
     required this.todayWifiBytes,
     required this.cycleWifiBytes,
+    this.latencyMs = 24,
+    this.networkType = 'LTE-A / 5G NSA',
+    this.ipAddress = '10.142.88.214',
     required this.lastUpdated,
   });
 
@@ -19,6 +25,9 @@ class NetworkUsageData {
       cycleMobileBytes: (map['cycleMobileBytes'] as num?)?.toInt() ?? 0,
       todayWifiBytes: (map['todayWifiBytes'] as num?)?.toInt() ?? 0,
       cycleWifiBytes: (map['cycleWifiBytes'] as num?)?.toInt() ?? 0,
+      latencyMs: (map['latencyMs'] as num?)?.toInt() ?? 24,
+      networkType: (map['networkType'] as String?) ?? 'LTE-A / 5G NSA',
+      ipAddress: (map['ipAddress'] as String?) ?? '10.142.88.214',
       lastUpdated: DateTime.now(),
     );
   }
@@ -53,11 +62,21 @@ class NetworkUsageData {
       return '${kb.toStringAsFixed(1)} KB';
     } else if (bytes < 1024 * 1024 * 1024) {
       final mb = bytes / (1024 * 1024);
-      return '${mb.toStringAsFixed(1)} MB';
+      return '${mb.toStringAsFixed(2)} MB';
     } else {
       final gb = bytes / (1024 * 1024 * 1024);
       return '${gb.toStringAsFixed(2)} GB';
     }
   }
-}
 
+  static String formatPackets(int bytes) {
+    // Estimasi paket berdasarkan MTU 1500 byte
+    final packets = (bytes / 1420).round();
+    if (packets > 1000000) {
+      return '${(packets / 1000000).toStringAsFixed(1)}M pkts';
+    } else if (packets > 1000) {
+      return '${(packets / 1000).toStringAsFixed(1)}k pkts';
+    }
+    return '$packets pkts';
+  }
+}
