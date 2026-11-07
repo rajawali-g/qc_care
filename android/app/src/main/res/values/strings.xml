@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">QC_MCE</string>
+    <string name="widget_description">Widget pemantau kuota data internet QC_MCE di layar depan</string>
+</resources>
+
